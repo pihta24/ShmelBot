@@ -10,7 +10,6 @@ dnspython = "*"
 gunicorn = "*"
 vk-api = "*"
 flask-cors = "*"
-uwsgi = "*"
 
 [dev-packages]
 
