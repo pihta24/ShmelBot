@@ -1,8 +1,11 @@
+import random
 from typing import Optional
 
 from vk_api.vk_api import VkApiMethod
 from pymongo import MongoClient
 from bson.objectid import ObjectId
+
+from utils import photos
 
 
 class User:
@@ -18,6 +21,10 @@ class User:
         if not user:
             return None
         return user[0]["first_name"]
+    
+    @property
+    def picture(self) -> str:
+        return self.__mongo_client["users"]["users"].find_one({"_id": ObjectId(self.__id)})["picture"]
     
     @property
     def balance(self) -> int:
@@ -43,8 +50,11 @@ class User:
         user_model = User(vk_id, vk_api, mongo_client)
         if user is None:
             user_model.__id = str(mongo_client["users"]["users"].insert_one(
-                {"vk_id": vk_id,
-                 "was_shmel": 0}
+                {
+                    "vk_id": vk_id,
+                    "was_shmel": 0,
+                    "picture": random.choice(photos),
+                }
             ).inserted_id)
             mongo_client["shmelcoin"]["balances"].insert_one({"user_id": ObjectId(user_model.__id), "balance": 0})
         else:

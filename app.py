@@ -1,28 +1,23 @@
 import re
 import os
+import random
 
+from flask import Flask, json, request, abort
 from flask_cors import CORS
 from pymongo import MongoClient
-from models.User import User
-from flask import Flask, json, request, abort
 from vk_api import VkApi
 from vk_api.utils import get_random_id
-import random
 from base64 import b64encode
 from hashlib import sha256
 from hmac import HMAC
 from urllib.parse import parse_qsl, urlencode
 
+from utils import phrases
+from models.User import User
+
 VK_ACCESS_KEY = os.environ.get("VK_ACCESS_KEY")
 VK_TOKEN = os.environ.get("VK_TOKEN")
 VK_SECURE_KEY = os.environ.get("VK_SECURE_KEY")
-
-phrases = ["Представь шмеля", "Видишь шмеля?",
-           "Вжжжжжж", "Я шмель",
-           "Где шмель?", "Вы видите шмеля?",
-           "Шмель-шмель", "Пьяный шмель",
-           "Веселый шмель", "Крутой шмель",
-           "Уставший шмель"]
 
 app = Flask(__name__)
 CORS(app)
@@ -61,7 +56,7 @@ def vk():
     if data["secret"] == VK_ACCESS_KEY:
         if data["type"] == "confirmation":
             if data["group_id"] == 204539742:
-                return "f72bf7bc"
+                return os.environ.get("CONFIRMATION_KEY")
         elif data['type'] == 'message_new':
             message = data["object"]["message"]
             if message["peer_id"] < 2000000000:
@@ -79,7 +74,7 @@ def vk():
                     user = User.get(message['from_id'], vk_api, mongo_client)
                     vk_api.messages.send(message=
                                          f"Баланс: {user.balance} мёда\n"
-                                         f"Был(а) шмелём {user.was_shmel} раз",
+                                         f"Прилетал в беседы {user.was_shmel} раз",
                                          user_id=message["from_id"],
                                          random_id=get_random_id())
             else:
@@ -96,10 +91,11 @@ def vk():
                                          random_id=get_random_id())
                 elif message["text"].lower() == "шмель профиль":
                     user = User.get(message['from_id'], vk_api, mongo_client)
-                    vk_api.messages.send(message=f"Профиль пользователя {user.name}\n"
-                                                 f"Баланс: {user.balance} мёда\n"
-                                                 f"Был(а) шмелём {user.was_shmel} раз",
+                    vk_api.messages.send(message=f"Баланс: {user.balance} мёда\n"
+                                                 f"Прилетал в беседы {user.was_shmel} раз\n"
+                                                 f"Состоит в number ульях",
                                          chat_id=chat_id,
+                                         attachment=user.picture,
                                          random_id=get_random_id())
                 elif re.match("[бв]ж{2,}", message["text"].lower()):
                     User.get(message['from_id'], vk_api, mongo_client).was_shmel += 1
@@ -108,7 +104,7 @@ def vk():
                                          chat_id=chat_id,
                                          random_id=get_random_id())
                 if "action" in message.keys():
-                    if message["action"]["type"] == "chat_invite_user" or\
+                    if message["action"]["type"] == "chat_invite_user" or \
                             message["action"]["type"] == "chat_invite_user_by_link":
                         vk_api.messages.send(message="Приветствуем нового шмеля в нашей беседе",
                                              chat_id=chat_id,
