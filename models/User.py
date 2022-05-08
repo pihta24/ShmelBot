@@ -27,7 +27,7 @@ class User:
     
     @property
     def hives_count(self):
-        return self.__mongo_client["users"]["hives"].find({"members": self.__id}).count()
+        return self.__mongo_client["users"]["hives"].count_documents({"members": self.__id})
     
     @property
     def balance(self) -> int:
