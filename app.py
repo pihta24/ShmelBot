@@ -13,7 +13,7 @@ from hmac import HMAC
 from urllib.parse import parse_qsl, urlencode
 
 from utils import phrases
-from models.User import User
+from models import User, Hive
 
 VK_ACCESS_KEY = os.environ.get("VK_ACCESS_KEY")
 VK_TOKEN = os.environ.get("VK_TOKEN")
@@ -59,6 +59,9 @@ def vk():
                 return os.environ.get("CONFIRMATION_KEY")
         elif data['type'] == 'message_new':
             message = data["object"]["message"]
+            if message['from_id'] < 0:
+                return "ok"
+            user = User.get(message['from_id'], vk_api, mongo_client)
             if message["peer_id"] < 2000000000:
                 if message["text"].lower() == "шмель":
                     vk_api.messages.send(message=random.choice(phrases),
@@ -66,12 +69,11 @@ def vk():
                                          random_id=get_random_id())
                 elif message["text"].lower() == "баланс":
                     vk_api.messages.send(message="Баланс: "
-                                                 f"{User.get(message['from_id'], vk_api, mongo_client).balance} "
+                                                 f"{user.balance} "
                                                  "мёда",
                                          user_id=message["from_id"],
                                          random_id=get_random_id())
                 elif message["text"].lower() == "профиль":
-                    user = User.get(message['from_id'], vk_api, mongo_client)
                     vk_api.messages.send(message=
                                          f"Баланс: {user.balance} мёда\n"
                                          f"Прилетал в беседы {user.was_shmel} раз",
@@ -79,18 +81,18 @@ def vk():
                                          random_id=get_random_id())
             else:
                 chat_id = message["peer_id"] - 2000000000
+                hive = Hive.get(message["peer_id"], vk_api, mongo_client, message["from_id"])
                 if message["text"].lower() == "шмель":
                     vk_api.messages.send(message=random.choice(phrases),
                                          chat_id=chat_id,
                                          random_id=get_random_id())
                 elif message["text"].lower() == "шмель баланс":
                     vk_api.messages.send(message="Баланс:"
-                                                 f" {User.get(message['from_id'], vk_api, mongo_client).balance}"
+                                                 f" {user.balance}"
                                                  " мёда",
                                          chat_id=chat_id,
                                          random_id=get_random_id())
                 elif message["text"].lower() == "шмель профиль":
-                    user = User.get(message['from_id'], vk_api, mongo_client)
                     vk_api.messages.send(message=f"Баланс: {user.balance} мёда\n"
                                                  f"Прилетал в беседы {user.was_shmel} раз\n"
                                                  f"Состоит в number ульях",
@@ -98,18 +100,23 @@ def vk():
                                          attachment=user.picture,
                                          random_id=get_random_id())
                 elif re.match("[бв]ж{2,}", message["text"].lower()):
-                    User.get(message['from_id'], vk_api, mongo_client).was_shmel += 1
-                    vk_api.messages.send(message=f"{User.get(message['from_id'], vk_api, mongo_client).name}"
-                                                 + " теперь шмель",
+                    user.was_shmel += 1
+                    vk_api.messages.send(message=f"Шмель {user.name_gen} прилетел в беседу",
                                          chat_id=chat_id,
                                          random_id=get_random_id())
                 if "action" in message.keys():
                     if message["action"]["type"] == "chat_invite_user" or \
                             message["action"]["type"] == "chat_invite_user_by_link":
-                        vk_api.messages.send(message="Приветствуем нового шмеля в нашей беседе",
+                        if message["action"]["member_id"] < 0:
+                            return "ok"
+                        vk_api.messages.send(message="Приветствуем нового шмеля в нашем улье",
                                              chat_id=chat_id,
                                              random_id=get_random_id())
+                        hive.add_member(message["action"]["member_id"])
                     elif message["action"]["type"] == "chat_kick_user":
+                        if message["action"]["member_id"] < 0:
+                            return "ok"
+                        hive.del_member(message["action"]["member_id"])
                         vk_api.messages.send(message="Мы потеряли одного из наших шмелей :(",
                                              chat_id=chat_id,
                                              random_id=get_random_id())
