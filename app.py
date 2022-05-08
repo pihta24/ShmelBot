@@ -95,7 +95,7 @@ def vk():
                 elif message["text"].lower() == "шмель профиль":
                     vk_api.messages.send(message=f"Баланс: {user.balance} мёда\n"
                                                  f"Прилетал в беседы {user.was_shmel} раз\n"
-                                                 f"Состоит в number ульях",
+                                                 f"Состоит в {user.hives_count} ульях",
                                          chat_id=chat_id,
                                          attachment=user.picture,
                                          random_id=get_random_id())
