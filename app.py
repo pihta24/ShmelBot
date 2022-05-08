@@ -81,7 +81,7 @@ def vk():
                                          random_id=get_random_id())
             else:
                 chat_id = message["peer_id"] - 2000000000
-                hive = Hive.get(message["peer_id"], vk_api, mongo_client, message["from_id"])
+                hive = Hive.get(message["peer_id"], vk_api, mongo_client, user.id)
                 if message["text"].lower() == "шмель":
                     vk_api.messages.send(message=random.choice(phrases),
                                          chat_id=chat_id,
@@ -112,11 +112,11 @@ def vk():
                         vk_api.messages.send(message="Приветствуем нового шмеля в нашем улье",
                                              chat_id=chat_id,
                                              random_id=get_random_id())
-                        hive.add_member(message["action"]["member_id"])
+                        hive.add_member(User.get(message["action"]["member_id"], vk_api, mongo_client).id)
                     elif message["action"]["type"] == "chat_kick_user":
                         if message["action"]["member_id"] < 0:
                             return "ok"
-                        hive.del_member(message["action"]["member_id"])
+                        hive.del_member(User.get(message["action"]["member_id"], vk_api, mongo_client).id)
                         vk_api.messages.send(message="Мы потеряли одного из наших шмелей :(",
                                              chat_id=chat_id,
                                              random_id=get_random_id())

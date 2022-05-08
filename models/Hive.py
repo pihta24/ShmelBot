@@ -10,6 +10,10 @@ class Hive:
         self.__vk_api = vk_api
         self.__mongo_client = mongo_client
         self.vk_id = vk_id
+        
+    @property
+    def id(self):
+        return self.__id
     
     @property
     def title(self) -> Optional[str]:
