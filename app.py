@@ -103,7 +103,7 @@ def vk():
                     vk_api.messages.send(message=f"Общий баланс: {hive.balance} мёда\n",
                                          chat_id=chat_id,
                                          random_id=get_random_id())
-                elif message["text"].lower().startswith("отправить мед в улей"):
+                elif message["text"].lower().startswith("отправить мед в улей") or message["text"].lower().startswith("отправить мёд в улей"):
                     if not message["text"].lower().replace("отправить мед в улей ", "").isnumeric():
                         vk_api.messages.send(message=f"Использование: Отправить мёд в улей <число>",
                                              chat_id=chat_id,
