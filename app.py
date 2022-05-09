@@ -99,6 +99,27 @@ def vk():
                                          chat_id=chat_id,
                                          attachment=user.picture,
                                          random_id=get_random_id())
+                elif message["text"].lower() == "профиль улья":
+                    vk_api.messages.send(message=f"Общий баланс: {hive.balance} мёда\n",
+                                         chat_id=chat_id,
+                                         random_id=get_random_id())
+                elif message["text"].lower().startswith("отправить мед в улей"):
+                    if not message["text"].lower().replace("отправить мед в улей ", "").isnumeric():
+                        vk_api.messages.send(message=f"Использование: Отправить мёд в улей <число>",
+                                             chat_id=chat_id,
+                                             random_id=get_random_id())
+                    elif user.balance < int(message["text"].lower().replace("отправить мед в улей ", "")):
+                        vk_api.messages.send(message=f"У вас недостаточно мёда",
+                                             chat_id=chat_id,
+                                             random_id=get_random_id())
+                    else:
+                        hive.balance += int(message["text"].lower().replace("отправить мед в улей ", ""))
+                        user.balance -= int(message["text"].lower().replace("отправить мед в улей ", ""))
+                        vk_api.messages.send(message=f"Мёд успешно отправлен\n"
+                                                     f"Ваш баланс: {user.balance} мёда\n"
+                                                     f"Баланс улья: {hive.balance} мёда",
+                                             chat_id=chat_id,
+                                             random_id=get_random_id())
                 elif re.match("[бв]ж{2,}", message["text"].lower()):
                     user.was_shmel += 1
                     vk_api.messages.send(message=f"Шмель {user.name_gen} прилетел в беседу",
